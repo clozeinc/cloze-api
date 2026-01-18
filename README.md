@@ -8,7 +8,7 @@ and when an integrated application is running in an iframe.
 Include the script in your HTML:
 
 ```html
-<script src="cloze-api.js"></script>
+<script src="https://cdn.cloze.com/js/cloze-api.js"></script>
 ```
 
 Or if using a module system:
