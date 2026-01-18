@@ -1,0 +1,22 @@
+{
+  "name": "cloze-api-client",
+  "version": "1.0.0",
+  "description": "JavaScript client library for the Cloze API",
+  "main": "cloze-api.js",
+  "types": "cloze-api.d.ts",
+  "keywords": [
+    "cloze"
+  ],
+  "author": "Cloze, Inc.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/clozeinc/cloze-api"
+  },
+  "bugs": {
+    "url": "https://github.com/clozeinc/cloze-api/issues"
+  },
+  "homepage": "https://developer.cloze.com",
+  "devDependencies": {},
+  "dependencies": {}
+}
