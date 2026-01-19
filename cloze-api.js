@@ -12,9 +12,6 @@ class Cloze
      */
     constructor(apiKey)
     {
-        if(!apiKey)
-            throw new Error('API key is required');
-
         this.apiKey = apiKey;
         this.backend = apiKey ? 'fetch' : 'postMessage';
         this.baseUrl = 'https://api.cloze.com';

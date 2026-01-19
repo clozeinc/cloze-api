@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloze API Client Examples</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        h2 {
+            color: #666;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+            color: white;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .output {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-left: 4px solid #007bff;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .error {
+            border-left-color: #dc3545;
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .success {
+            border-left-color: #28a745;
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #ddd;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            margin-right: 5px;
+            border-radius: 4px 4px 0 0;
+            color: black;
+        }
+        .tab.active {
+            background-color: #007bff;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        #iframe-demo {
+            width: 100%;
+            height: 400px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔌 Cloze API Client Examples</h1>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('fetch')">Remote Deployment</button>
+            <button class="tab" onclick="switchTab('postmessage')">Frame Deployment</button>
+        </div>
+
+        <!-- Fetch Backend Tab -->
+        <div id="fetch-tab" class="tab-content active">
+            <div class="input-group">
+                <label for="api-key">API Key:</label>
+                <input type="password" id="api-key" placeholder="Enter your Cloze API key">
+            </div>
+        </div>
+
+        <!-- PostMessage Backend Tab -->
+        <div id="postmessage-tab" class="tab-content">
+            <p>Contact support@cloze.com to configure your oauth app for frame embedding</p>
+        </div>
+
+    </div>
+
+    <div class="container">
+        <div class="input-group">
+            <label for="api-endpoint">Endpoint:</label>
+            <select id="api-endpoint">
+                <option value="people.find">People - Find</option>
+                <option value="people.get">People - Get (by ID)</option>
+                <option value="people.create">People - Create</option>
+                <option value="people.search">People - Search</option>
+                <option value="projects.find">Projects - Find</option>
+                <option value="companies.find">Companies - Find</option>
+                <option value="timeline.createNote">Timeline - Create Note</option>
+                <option value="team.getMembers">Team - Get Members</option>
+                <option value="account.getProfile">Account - Get Profile</option>
+                <option value="account.getTags">Account - Get Tags</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label for="api-params">Parameters (JSON):</label>
+            <textarea id="api-params" rows="4" placeholder='{"max": 10, "stage": "current"}'>{"max": 10}</textarea>
+        </div>
+
+        <button onclick="executeFetchRequest()">Execute Request</button>
+        <button onclick="clearOutput('fetch-output')">Clear Output</button>
+
+        <div id="fetch-output" class="output">Output will appear here...</div>
+    </div>
+
+    <script src="https://cdn.cloze.com/js/cloze-api.js?v=2"></script>
+    <script>
+        let clozeClient = null;
+        let mode = "fetch";
+
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(tabName + '-tab').classList.add('active');
+
+            if(tabName !== mode)
+                clozeClient = null; // Reset the client
+
+            mode = tabName;
+        }
+
+        async function executeFetchRequest() {
+            const apiKey = document.getElementById('api-key').value;
+            const endpoint = document.getElementById('api-endpoint').value;
+            const paramsText = document.getElementById('api-params').value;
+            const output = document.getElementById('fetch-output');
+
+            if (!apiKey && (mode === "fetch")) {
+                showOutput(output, 'Please enter an API key', 'error');
+                return;
+            }
+
+            try {
+                // Initialize client if not already done
+                if (!clozeClient) {
+                    clozeClient = new Cloze(mode === "fetch" ? apiKey : null);
+                }
+
+                // Parse parameters
+                let params = {};
+                if (paramsText.trim()) {
+                    params = JSON.parse(paramsText);
+                }
+
+                showOutput(output, 'Executing request...', 'info');
+
+                // Execute the appropriate endpoint
+                const [api, method] = endpoint.split('.');
+                let result;
+
+                switch (endpoint) {
+                    case 'people.find':
+                        result = await clozeClient.people.find(params);
+                        break;
+                    case 'people.get':
+                        const personId = params.uniqueid || prompt('Enter Person ID:');
+                        result = await clozeClient.people.get(personId);
+                        break;
+                    case 'people.create':
+                        result = await clozeClient.people.create(params);
+                        break;
+                    case 'people.search':
+                        const query = params.query || prompt('Enter search query:');
+                        result = await clozeClient.people.search(query, params);
+                        break;
+                    case 'projects.find':
+                        result = await clozeClient.projects.find(params);
+                        break;
+                    case 'companies.find':
+                        result = await clozeClient.companies.find(params);
+                        break;
+                    case 'timeline.createNote':
+                        result = await clozeClient.timeline.createNote(params);
+                        break;
+                    case 'team.getMembers':
+                        result = await clozeClient.team.getMembers(params);
+                        break;
+                    case 'account.getProfile':
+                        result = await clozeClient.account.getProfile();
+                        break;
+                    case 'account.getTags':
+                        result = await clozeClient.account.getTags();
+                        break;
+                    default:
+                        throw new Error('Unknown endpoint');
+                }
+
+                showOutput(output, JSON.stringify(result, null, 2), 'success');
+            } catch (error) {
+                showOutput(output, 'Error: ' + error.message, 'error');
+            }
+        }
+
+        function showOutput(element, text, type) {
+            element.textContent = text;
+            element.className = 'output';
+            if (type === 'error') {
+                element.classList.add('error');
+            } else if (type === 'success') {
+                element.classList.add('success');
+            }
+        }
+
+        function clearOutput(elementId) {
+            const element = document.getElementById(elementId);
+            element.textContent = 'Output cleared.';
+            element.className = 'output';
+        }
+    </script>
+</body>
+</html>
